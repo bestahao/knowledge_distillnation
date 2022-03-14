@@ -204,6 +204,41 @@ class DataProcessor(object):
       return lines
 
 
+class ImdbProcessor(DataProcessor):
+    """Processor for my task-news classification """
+
+    def __init__(self):
+        self.labels = list(map(str, range(0, 2)))
+
+    def get_train_examples(self, data_dir):
+        return self._create_examples(
+            self._read_tsv(os.path.join(data_dir, 'train_data.csv')), 'train')
+
+    def get_dev_examples(self, data_dir):
+        return self._create_examples(
+            self._read_tsv(os.path.join(data_dir, 'dev_data.csv')), 'val')
+
+    def get_test_examples(self, data_dir):
+        return self._create_examples(
+            self._read_tsv(os.path.join(data_dir, 'test_data.csv')), 'test')
+
+    def get_labels(self):
+        return self.labels
+
+    def _create_examples(self, lines, set_type):
+        """create examples for the training and val sets"""
+        examples = []
+        for (i, line) in enumerate(lines):
+            guid = '%s-%s' % (set_type, i)
+            # print("line[0]:",line[0])
+            # print("line[1]:",line[1])
+            text_a = tokenization.convert_to_unicode(line[1].strip('"'))
+            label = tokenization.convert_to_unicode(line[0].strip('"'))
+            examples.append(InputExample(guid=guid, text_a=text_a, label=label))
+        return examples
+
+
+
 class XnliProcessor(DataProcessor):
   """Processor for the XNLI data set."""
 
@@ -291,6 +326,42 @@ class MnliProcessor(DataProcessor):
       examples.append(
           InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
     return examples
+
+
+class sst2Processor(DataProcessor):
+    """Processor for the SST-2 data set (GLUE version)."""
+
+    def get_train_examples(self, data_dir):
+        """See base class."""
+        return self._create_examples(
+            self._read_tsv(os.path.join(data_dir, "train.tsv")), "train")
+
+    def get_dev_examples(self, data_dir):
+        """See base class."""
+        return self._create_examples(
+            self._read_tsv(os.path.join(data_dir, "dev.tsv")), "dev")
+
+    def get_test_examples(self, data_dir):
+        """See base class."""
+        return self._create_examples(
+            self._read_tsv(os.path.join(data_dir, "test.tsv")), "test")
+
+    def get_labels(self):
+        """See base class."""
+        return ["0", "1"]
+
+    def _create_examples(self, lines, set_type):
+        """Creates examples for the training and dev sets."""
+        examples = []
+        for (i, line) in enumerate(lines):
+            if i == 0:
+                continue
+            guid = "%s-%s" % (set_type, i)
+            text_a = line[0]
+            label = line[1]
+            examples.append(
+                InputExample(guid=guid, text_a=text_a, text_b=None, label=label))
+        return examples
 
 
 class MrpcProcessor(DataProcessor):
@@ -788,6 +859,8 @@ def main(_):
       "mnli": MnliProcessor,
       "mrpc": MrpcProcessor,
       "xnli": XnliProcessor,
+      "imdb": ImdbProcessor,
+      "sst-2": sst2Processor,
   }
 
   tokenization.validate_case_matches_checkpoint(FLAGS.do_lower_case,
@@ -838,6 +911,7 @@ def main(_):
   train_examples = None
   num_train_steps = None
   num_warmup_steps = None
+  # train loss modify
   if FLAGS.do_train:
     train_examples = processor.get_train_examples(FLAGS.data_dir)
     num_train_steps = int(
@@ -877,7 +951,9 @@ def main(_):
         seq_length=FLAGS.max_seq_length,
         is_training=True,
         drop_remainder=True)
-    estimator.train(input_fn=train_input_fn, max_steps=num_train_steps)
+    tensors_to_log = {'train loss': 'loss/Mean:0'}
+    logging_hook = tf.train.LoggingTensorHook(tensors=tensors_to_log, every_n_iter=10)
+    estimator.train(input_fn=train_input_fn, hooks=[logging_hook], max_steps=num_train_steps)
 
   if FLAGS.do_eval:
     eval_examples = processor.get_dev_examples(FLAGS.data_dir)
@@ -953,7 +1029,6 @@ def main(_):
         seq_length=FLAGS.max_seq_length,
         is_training=False,
         drop_remainder=predict_drop_remainder)
-
     result = estimator.predict(input_fn=predict_input_fn)
 
     output_predict_file = os.path.join(FLAGS.output_dir, "test_results.tsv")

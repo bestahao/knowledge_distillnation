@@ -242,7 +242,7 @@ class AugmentProcessor(object):
         self.augmentor = augmentor
         self.glue_dir = glue_dir
         self.task_name = task_name
-        self.augment_ids = {'MRPC': [3, 4], 'MNLI': [8, 9], 'CoLA': [3], 'SST-2': [1],
+        self.augment_ids = {'MRPC': [3, 4], 'MNLI': [8, 9], 'CoLA': [3], 'SST-2': [0],
                             'STS-B': [7, 8], 'QQP': [3, 4], 'QNLI': [1, 2], 'RTE': [1, 2],
                             'IMDB': [1]}
 
@@ -254,7 +254,7 @@ class AugmentProcessor(object):
     def read_augment_write(self):
         # task_dir = os.path.join(self.glue_dir, self.task_name)
         task_dir = self.glue_dir
-        train_samples = _read_tsv(os.path.join(task_dir, "train_data.csv"))
+        train_samples = _read_tsv(os.path.join(task_dir, "train.tsv"))
         output_filename = os.path.join(task_dir, "train_aug.tsv")
 
         augment_ids_ = self.augment_ids[self.task_name]

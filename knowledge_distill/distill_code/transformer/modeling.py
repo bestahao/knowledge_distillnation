@@ -123,6 +123,88 @@ def load_tf_weights_in_bert(model, tf_checkpoint_path):
         pointer.data = torch.from_numpy(array)
     return model
 
+def load_tf_weights_in_bert_modify(model, tf_checkpoint_path):
+    """ Load tf checkpoints in a pytorch model
+    """
+    try:
+        import re
+        import numpy as np
+        import tensorflow as tf
+    except ImportError:
+        print("Loading a TensorFlow models in PyTorch, requires TensorFlow to be installed. Please see "
+              "https://www.tensorflow.org/install/ for installation instructions.")
+        raise
+    tf_path = os.path.abspath(tf_checkpoint_path)
+    print("Converting TensorFlow checkpoint from {}".format(tf_path))
+    
+    # Load weights from TF model & modfify
+    checkpoint_reader = tf.train.load_checkpoint(tf_path)
+    init_vars = checkpoint_reader.get_variable_to_shape_map()
+    
+    names = []
+    arrays = []
+    for name, shape in init_vars.items():
+        print("Loading TF weight {} with shape {}".format(name, shape))
+        array = checkpoint_reader.get_tensor(name)
+        names.append(name)
+        arrays.append(array)
+
+    for name, array in zip(names, arrays):
+        name = name.split('/')
+        # adam_v and adam_m are variables used in AdamWeightDecayOptimizer to calculated m and v
+        # which are not required for using pretrained model
+        if any(n in ["adam_v", "adam_m", "global_step"] for n in name):
+            print("Skipping {}".format("/".join(name)))
+            continue
+        pointer = model
+        # print(len(name), name)
+        for m_name in name:
+            if re.fullmatch(r'[A-Za-z]+_\d+', m_name):
+                l = re.split(r'_(\d+)', m_name)
+            else:
+                l = [m_name]
+            if l[0] == 'kernel' or l[0] == 'gamma':
+                pointer = getattr(pointer, 'weight')
+            elif l[0] == 'output_bias':
+                try:
+                    pointer = getattr(pointer, 'classifier')
+                    pointer = getattr(pointer, 'bias')
+                except AttributeError:
+                    print("Skipping {}".format("/".join(name)))
+                    continue
+            elif l[0] == 'beta':
+                try:
+                    pointer = getattr(pointer, 'bias')
+                except AttributeError:
+                    print("Skipping {}".format("/".join(name)))
+                    continue
+            elif l[0] == 'output_weights':
+                pointer = getattr(pointer, 'classifier')
+                pointer = getattr(pointer, 'weight')
+            elif l[0] == 'squad':
+                pointer = getattr(pointer, 'classifier')
+            else:
+                try:
+                    pointer = getattr(pointer, l[0])
+                except AttributeError:
+                    print("Skipping {}".format("/".join(name)))
+                    continue
+            if len(l) >= 2:
+                num = int(l[1])
+                pointer = pointer[num]
+        if m_name[-11:] == '_embeddings':
+            pointer = getattr(pointer, 'weight')
+        elif m_name == 'kernel':
+            array = np.transpose(array)
+        try:
+            assert pointer.shape == array.shape
+        except AssertionError as e:
+            e.args += (pointer.shape, array.shape)
+            raise
+        print("Initialize PyTorch weight {}".format(name))
+        pointer.data = torch.from_numpy(array)
+    return model
+
 
 def gelu(x):
     """Implementation of the gelu activation function.
@@ -672,6 +754,7 @@ class BertPreTrainedModel(nn.Module):
                     . `bert_config.json` a configuration file for the model
                     . `model.chkpt` a TensorFlow checkpoint
             from_tf: should we load the weights from a locally saved TensorFlow checkpoint
+            from_tf_modify: use new modified load function
             cache_dir: an optional path to a folder in which the pre-trained models will be cached.
             state_dict: an optional state dictionnary (collections.OrderedDict object) to use instead of Google pre-trained models
             *inputs, **kwargs: additional input for the specific Bert class
@@ -681,6 +764,8 @@ class BertPreTrainedModel(nn.Module):
         kwargs.pop('state_dict', None)
         from_tf = kwargs.get('from_tf', False)
         kwargs.pop('from_tf', None)
+        from_tf_modify = kwargs.get('from_tf_modify', False)
+        kwargs.pop('from_tf_modify', None)
 
         # Load config
         config_file = os.path.join(pretrained_model_name_or_path, CONFIG_NAME)
@@ -695,11 +780,13 @@ class BertPreTrainedModel(nn.Module):
             logger.info("Loading model {}".format(weights_path))
             state_dict = torch.load(weights_path, map_location='cpu')
 
-        if from_tf:
+        if from_tf and not from_tf_modify:
             # Directly load from a TensorFlow checkpoint
             weights_path = os.path.join(
                 pretrained_model_name_or_path, TF_WEIGHTS_NAME)
             return load_tf_weights_in_bert(model, weights_path)
+        elif from_tf and from_tf_modify:
+            return load_tf_weights_in_bert_modify(model, pretrained_model_name_or_path)
         # Load from a PyTorch state_dict
         old_keys = []
         new_keys = []

@@ -28,7 +28,7 @@ TinyBERT部分的源码来自于[**TinyBERT GITHUB**](https://github.com/huawei-
 | 1     $BERT_{base}$                    | 91.5  |  92.1/92.0  |
 | 2    TinyBERT                          | 90.9  |  90.5/90.7  |
 | 3     Bi-LSTM without  Distillnation   | 85.8  |  86.7/86.9  |
-| 4     Distilled  Bi-LSTM               | 88.3  |  89.0/89.3  |
+| 4     Distilled  Bi-LSTM(Tang)         | 88.3  |  89.0/89.3  |
 | 5     FT plan for Distilled Bi-LSTM    | 86.2  |  87.0/87.1  |
 | 6     SPKD plan for Distilled  Bi-LSTM | 89.0  |  89.8/89.7  |
 
@@ -36,28 +36,28 @@ TinyBERT部分的源码来自于[**TinyBERT GITHUB**](https://github.com/huawei-
 
 **表2** **模型性能对比**
 
-| Model                 | Dataset | Bi-LSTM | Distilled Bi-LSTM [5] | FT plan | SPKD plan | TinyBERT [4] |
-| --------------------- | ------- | ------- | --------------------- | ------- | --------- | ------------ |
-| Bi-LSTM               | IMDB    | 0%      | -2.6%                 | -0.3%   | -3.5%     | -4.2%        |
-|                       | SST-2   | 0%      | -2.8%                 | -0.5%   | -3.6%     | -5.6%        |
-| Distilled Bi-LSTM [5] | IMDB    | +2.7%   | 0%                    | +2.3%   | -0.9%     | -1.7%        |
-|                       | SST-2   | +2.9%   | 0%                    | +2.4%   | -0.8%     | -2.9%        |
-| FT plan               | IMDB    | +0.3%   | -2.2%                 | 0%      | -3.1%     | -3.9%        |
-|                       | SST-2   | +0.5%   | -2.4%                 | 0%      | -3.1%     | -5.1%        |
-| SPKD plan             | IMDB    | +3.5%   | +0.9%                 | +3.2%   | 0%        | -0.8%        |
-|                       | SST-2   | +3.7%   | +0.8%                 | +3.2%   | 0%        | -2.1%        |
-| TinyBERT [4]          | IMDB    | +4.4%   | +1.7%                 | +4.0%   | +0.8%     | 0%           |
-|                       | SST-2   | +5.9%   | +2.9%                 | +5.5%   | +2.1%     | 0%           |
+| Model                   | Dataset | Bi-LSTM | Distilled Bi-LSTM(Tang) | FT plan | SPKD plan | TinyBERT |
+| ----------------------- | ------- | ------- | ----------------------- | ------- | --------- | -------- |
+| Bi-LSTM                 | IMDB    | 0%      | -2.6%                   | -0.3%   | -3.5%     | -4.2%    |
+|                         | SST-2   | 0%      | -2.8%                   | -0.5%   | -3.6%     | -5.6%    |
+| Distilled Bi-LSTM(Tang) | IMDB    | +2.7%   | 0%                      | +2.3%   | -0.9%     | -1.7%    |
+|                         | SST-2   | +2.9%   | 0%                      | +2.4%   | -0.8%     | -2.9%    |
+| FT plan                 | IMDB    | +0.3%   | -2.2%                   | 0%      | -3.1%     | -3.9%    |
+|                         | SST-2   | +0.5%   | -2.4%                   | 0%      | -3.1%     | -5.1%    |
+| SPKD plan               | IMDB    | +3.5%   | +0.9%                   | +3.2%   | 0%        | -0.8%    |
+|                         | SST-2   | +3.7%   | +0.8%                   | +3.2%   | 0%        | -2.1%    |
+| TinyBERT [4]            | IMDB    | +4.4%   | +1.7%                   | +4.0%   | +0.8%     | 0%       |
+|                         | SST-2   | +5.9%   | +2.9%                   | +5.5%   | +2.1%     | 0%       |
 
  
 
 **表3 参数量与推理时间**
 
-| **#**    Model      | # of Par.        | Inference Time    |
-| ------------------- | ---------------- | ----------------- |
-| 1     $BERT_{base}$ | 110M (5$\times$) | 264s (18$\times$) |
-| 2     TinyBERT      | 68M (3$\times$)  | 134s (9$\times$)  |
-| 3     Bi-LSTM       | 23M (1$\times$ ) | 15s (1$\times$)   |
+| **#**    Model      | # of Par. | Inference Time |
+| ------------------- | --------- | -------------- |
+| 1     $BERT_{base}$ | 110M (5X) | 264s (18X)     |
+| 2     TinyBERT      | 68M (3X)  | 134s (9X)      |
+| 3     Bi-LSTM       | 23M (1X)  | 15s (1X)       |
 
 ## 4. 总结
 

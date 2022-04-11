@@ -1,34 +1,16 @@
 # coding=utf-8
-# Copyright 2020 Huawei Technologies Co., Ltd.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-"""get bert embedding layer + tokenizer."""
+"""get bert embedding layer + tokenizer.
+   step 1: load bert model from pretrained (Pytorch Pretrained)
+   step 2: check model size
+   step 3: save tokenizer and embedding part
+   step 4: load tokenizer and embedding part for test"""
 
-import random
-import sys
-import os
-import unicodedata
-import re
+
 import logging
-import csv
 import argparse
 import pickle
-
-
 import torch
-import numpy as np
-
-from transformer import BertTokenizer, BertForMaskedLM
+from ..transformer import BertTokenizer, BertForMaskedLM
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S',
@@ -38,9 +20,9 @@ logger = logging.getLogger(__name__)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+
 def main():
     parser = argparse.ArgumentParser()
-
     parser.add_argument("--pretrained_bert_model", default=None, type=str, required=True,
                         help="Downloaded pretrained model (bert-base-cased/uncased) is under this folder")
     parser.add_argument("--save_or_load", default='save', type=str, required=True,
@@ -75,10 +57,6 @@ def main():
             size += p.nelement()
         print(size)
         
-        
-    
-
-
 
 if __name__ == "__main__":
     main()

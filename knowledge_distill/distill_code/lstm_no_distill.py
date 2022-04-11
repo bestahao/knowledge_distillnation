@@ -58,17 +58,20 @@ class MyProcessor(DataProcessor):
             examples.append(InputExample(guid=guid, text_a=text_a, label=label))
         return examples
 
+
 def result_to_file(result, file_name):
     with open(file_name, "a") as writer:
         logger.info("***** Eval results *****")
         for key in sorted(result.keys()):
             logger.info("  %s = %s", key, str(result[key]))
             writer.write("%s = %s\n" % (key, str(result[key])))
-    
+
+
 def soft_cross_entropy(predicts, targets):
     likelihood = torch.nn.functional.log_softmax(predicts, dim=-1)
     targets_prob = torch.nn.functional.softmax(targets, dim=-1)
     return (- targets_prob * student_likelihood).mean()
+
 
 def do_eval(model, eval_dataloader, device, output_mode, eval_labels, num_labels):
     eval_loss = 0

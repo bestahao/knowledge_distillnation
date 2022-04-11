@@ -328,7 +328,7 @@ class MnliProcessor(DataProcessor):
     return examples
 
 
-class sst2Processor(DataProcessor):
+class Sst2Processor(DataProcessor):
     """Processor for the SST-2 data set (GLUE version)."""
 
     def get_train_examples(self, data_dir):
@@ -860,7 +860,7 @@ def main(_):
       "mrpc": MrpcProcessor,
       "xnli": XnliProcessor,
       "imdb": ImdbProcessor,
-      "sst-2": sst2Processor,
+      "sst-2": Sst2Processor,
   }
 
   tokenization.validate_case_matches_checkpoint(FLAGS.do_lower_case,
